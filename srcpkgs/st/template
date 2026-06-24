@@ -6,7 +6,7 @@ build_style=gnu-makefile
 make_use_env=compliant
 hostmakedepends="pkg-config"
 makedepends="fontconfig-devel libX11-devel libXft-devel"
-depends="ncurses st-terminfo-${version}_${revision}"
+depends="ncurses st-terminfo-${version}_${revision} font-adobe-source-code-pro nerd-fonts-symbols-ttf"
 short_desc="Simple terminal implementation for X"
 maintainer="meator <meator.dev@gmail.com>"
 license="MIT"
@@ -15,7 +15,6 @@ distfiles="https://dl.suckless.org/${pkgname}/${pkgname}-${version}.tar.gz"
 checksum=9ed9feabcded713d4ded38c8cebf36a3b08f0042ef7934a0e2b2409da56e649b
 
 pre_build() {
-	vsed -i config.def.h -e 's|Liberation Mono|Monospace|g'
 	[ -e ${FILESDIR}/config.h ] && cp ${FILESDIR}/config.h config.h
 	mkdir -p ${DESTDIR}/usr/share/terminfo
 }
