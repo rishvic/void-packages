@@ -2,7 +2,8 @@
 pkgname=dwm
 version=6.8
 revision=1
-makedepends="libXinerama-devel libXft-devel freetype-devel"
+makedepends="libXinerama-devel libXft-devel freetype-devel xorgproto"
+depends="dmenu st tmux font-terminus-ttf"
 short_desc="Dynamic window manager for X"
 maintainer="Orphaned <orphan@voidlinux.org>"
 license="MIT"
