@@ -1,0 +1,30 @@
+diff -upr a/components/datetime.c b/components/datetime.c
+--- a/components/datetime.c	2025-04-30 08:32:03.000000000 +0530
++++ b/components/datetime.c	2026-07-06 13:28:22.779064337 +0530
+@@ -1,5 +1,8 @@
+ /* See LICENSE file for copyright and license details. */
++#include <errno.h>
++#include <locale.h>
+ #include <stdio.h>
++#include <string.h>
+ #include <time.h>
+ 
+ #include "../slstatus.h"
+@@ -9,9 +12,16 @@ const char *
+ datetime(const char *fmt)
+ {
+ 	time_t t;
++	locale_t loc;
++
++	loc = newlocale(LC_TIME_MASK, "", (locale_t)0);
++	if (loc == (locale_t)0) {
++		warn("newlocale: Could not create a locale object: %s", strerror(errno));
++		return NULL;
++	}
+ 
+ 	t = time(NULL);
+-	if (!strftime(buf, sizeof(buf), fmt, localtime(&t))) {
++	if (!strftime_l(buf, sizeof(buf), fmt, localtime(&t), loc)) {
+ 		warn("strftime: Result string exceeds buffer size");
+ 		return NULL;
+ 	}

@@ -13,17 +13,18 @@ static const char unknown_str[] = "n/a";
  * function            description                     argument (example)
  *
  * battery_perc        battery percentage              battery name (BAT0)
- *                                                     NULL on OpenBSD
- * battery_state       battery charging state          battery name (BAT0)
- *                                                     NULL on OpenBSD
+ *                                                     NULL on OpenBSD/FreeBSD
  * battery_remaining   battery remaining HH:MM         battery name (BAT0)
- *                                                     NULL on OpenBSD
- * cpu_perc            cpu usage in percent            NULL
+ *                                                     NULL on OpenBSD/FreeBSD
+ * battery_state       battery charging state          battery name (BAT0)
+ *                                                     NULL on OpenBSD/FreeBSD
+ * cat                 read arbitrary file             path
  * cpu_freq            cpu frequency in MHz            NULL
+ * cpu_perc            cpu usage in percent            NULL
  * datetime            date and time                   format string (%F %T)
  * disk_free           free disk space in GB           mountpoint path (/)
  * disk_perc           disk usage in percent           mountpoint path (/)
- * disk_total          total disk space in GB          mountpoint path (/")
+ * disk_total          total disk space in GB          mountpoint path (/)
  * disk_used           used disk space in GB           mountpoint path (/)
  * entropy             available entropy               NULL
  * gid                 GID of current user             NULL
@@ -52,14 +53,22 @@ static const char unknown_str[] = "n/a";
  * temp                temperature in degree celsius   sensor file
  *                                                     (/sys/class/thermal/...)
  *                                                     NULL on OpenBSD
+ *                                                     thermal zone on FreeBSD
+ *                                                     (tz0, tz1, etc.)
  * uid                 UID of current user             NULL
+ * up                  interface is running            interface name (eth0)
  * uptime              system uptime                   NULL
  * username            username of current user        NULL
  * vol_perc            OSS/ALSA volume in percent      mixer file (/dev/mixer)
- * wifi_perc           WiFi signal in percent          interface name (wlan0)
+ *                                                     NULL on OpenBSD/FreeBSD
  * wifi_essid          WiFi ESSID                      interface name (wlan0)
+ * wifi_perc           WiFi signal in percent          interface name (wlan0)
  */
 static const struct arg args[] = {
-	/* function format          argument */
-	{ datetime, "%s",           "%F %T" },
+	/* function      format     argument */
+	{ datetime,      "%s",      "%a %e %b %Y %R:%S" },
+	{ wifi_essid,    " | %s",   "wlp4s0" },
+	{ wifi_perc,    " %s%%",    "wlp4s0" },
+	{ battery_perc,  " | %s%%", "BAT0" },
+	{ battery_state, "%s",      "BAT0" },
 };
