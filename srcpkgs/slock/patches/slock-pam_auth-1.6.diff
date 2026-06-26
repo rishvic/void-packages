@@ -1,0 +1,151 @@
+diff -up a/config.def.h b/config.def.h
+--- a/config.def.h	2025-08-09 18:31:01.880269593 +0530
++++ b/config.def.h	2026-06-26 15:56:18.925991587 +0530
+@@ -6,7 +6,11 @@ static const char *colorname[NUMCOLS] =
+ 	[INIT] =   "black",     /* after initialization */
+ 	[INPUT] =  "#005577",   /* during input */
+ 	[FAILED] = "#CC3333",   /* wrong password */
++	[PAM] =    "#9400D3",   /* waiting for PAM */
+ };
+ 
+ /* treat a cleared input like a wrong password (color) */
+ static const int failonclear = 1;
++
++/* PAM service that's used for authentication */
++static const char* pam_service = "login";
+diff -up a/config.mk b/config.mk
+--- a/config.mk	2025-08-09 18:31:01.880269593 +0530
++++ b/config.mk	2026-06-26 15:56:18.926134624 +0530
+@@ -12,7 +12,7 @@ X11LIB = /usr/X11R6/lib
+ 
+ # includes and libs
+ INCS = -I. -I/usr/include -I${X11INC}
+-LIBS = -L/usr/lib -lc -lcrypt -L${X11LIB} -lX11 -lXext -lXrandr
++LIBS = -L/usr/lib -lc -lcrypt -L${X11LIB} -lX11 -lXext -lXrandr -lpam
+ 
+ # flags
+ CPPFLAGS = -DVERSION=\"${VERSION}\" -D_DEFAULT_SOURCE -DHAVE_SHADOW_H
+diff -up a/slock.c b/slock.c
+--- a/slock.c	2025-08-09 18:31:01.880269593 +0530
++++ b/slock.c	2026-06-26 15:56:18.926345616 +0530
+@@ -19,16 +19,22 @@
+ #include <X11/keysym.h>
+ #include <X11/Xlib.h>
+ #include <X11/Xutil.h>
++#include <security/pam_appl.h>
++#include <security/pam_misc.h>
+ 
+ #include "arg.h"
+ #include "util.h"
+ 
+ char *argv0;
++static int pam_conv(int num_msg, const struct pam_message **msg, struct pam_response **resp, void *appdata_ptr);
++struct pam_conv pamc = {pam_conv, NULL};
++char passwd[256];
+ 
+ enum {
+ 	INIT,
+ 	INPUT,
+ 	FAILED,
++	PAM,
+ 	NUMCOLS
+ };
+ 
+@@ -58,6 +64,31 @@ die(const char *errstr, ...)
+ 	exit(1);
+ }
+ 
++static int
++pam_conv(int num_msg, const struct pam_message **msg,
++		struct pam_response **resp, void *appdata_ptr)
++{
++	int retval = PAM_CONV_ERR;
++	for(int i=0; i<num_msg; i++) {
++		if (msg[i]->msg_style == PAM_PROMPT_ECHO_OFF &&
++				strncmp(msg[i]->msg, "Password: ", 10) == 0) {
++			struct pam_response *resp_msg = malloc(sizeof(struct pam_response));
++			if (!resp_msg)
++				die("malloc failed\n");
++			char *password = malloc(strlen(passwd) + 1);
++			if (!password)
++				die("malloc failed\n");
++			memset(password, 0, strlen(passwd) + 1);
++			strcpy(password, passwd);
++			resp_msg->resp_retcode = 0;
++			resp_msg->resp = password;
++			resp[i] = resp_msg;
++			retval = PAM_SUCCESS;
++		}
++	}
++	return retval;
++}
++
+ #ifdef __linux__
+ #include <fcntl.h>
+ #include <linux/oom.h>
+@@ -122,6 +153,8 @@ gethash(void)
+ 	}
+ #endif /* HAVE_SHADOW_H */
+ 
++	/* pam, store user name */
++	hash = pw->pw_name;
+ 	return hash;
+ }
+ 
+@@ -130,11 +163,12 @@ readpw(Display *dpy, struct xrandr *rr,
+        const char *hash)
+ {
+ 	XRRScreenChangeNotifyEvent *rre;
+-	char buf[32], passwd[256], *inputhash;
+-	int num, screen, running, failure, oldc;
++	char buf[32];
++	int num, screen, running, failure, oldc, retval;
+ 	unsigned int len, color;
+ 	KeySym ksym;
+ 	XEvent ev;
++	pam_handle_t *pamh;
+ 
+ 	len = 0;
+ 	running = 1;
+@@ -161,10 +195,26 @@ readpw(Display *dpy, struct xrandr *rr,
+ 			case XK_Return:
+ 				passwd[len] = '\0';
+ 				errno = 0;
+-				if (!(inputhash = crypt(passwd, hash)))
+-					fprintf(stderr, "slock: crypt: %s\n", strerror(errno));
++				retval = pam_start(pam_service, hash, &pamc, &pamh);
++				color = PAM;
++				for (screen = 0; screen < nscreens; screen++) {
++					XSetWindowBackground(dpy, locks[screen]->win, locks[screen]->colors[color]);
++					XClearWindow(dpy, locks[screen]->win);
++					XRaiseWindow(dpy, locks[screen]->win);
++				}
++				XSync(dpy, False);
++
++				if (retval == PAM_SUCCESS)
++					retval = pam_authenticate(pamh, 0);
++				if (retval == PAM_SUCCESS)
++					retval = pam_acct_mgmt(pamh, 0);
++
++				running = 1;
++				if (retval == PAM_SUCCESS)
++					running = 0;
+ 				else
+-					running = !!strcmp(inputhash, hash);
++					fprintf(stderr, "slock: %s\n", pam_strerror(pamh, retval));
++				pam_end(pamh, retval);
+ 				if (running) {
+ 					XBell(dpy, 100);
+ 					failure = 1;
+@@ -340,10 +390,9 @@ main(int argc, char **argv) {
+ 	dontkillme();
+ #endif
+ 
++	/* the contents of hash are used to transport the current user name */
+ 	hash = gethash();
+ 	errno = 0;
+-	if (!crypt("", hash))
+-		die("slock: crypt: %s\n", strerror(errno));
+ 
+ 	if (!(dpy = XOpenDisplay(NULL)))
+ 		die("slock: cannot open display\n");

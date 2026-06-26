@@ -1,0 +1,3 @@
+slock-pam_auth-1.6.diff
+slock-pam_auth-no_priv_drop-1.6.diff
+slock-xss-lock-1.7.diff

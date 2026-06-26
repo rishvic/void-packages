@@ -3,7 +3,7 @@ pkgname=slock
 version=1.7
 revision=1
 hostmakedepends="pkg-config"
-makedepends="libXrandr-devel"
+makedepends="libXrandr-devel pam-devel"
 short_desc="Simple screen locker for X"
 maintainer="Filip Rojek <filip@filiprojek.cz>"
 license="MIT"
@@ -11,6 +11,7 @@ homepage="http://tools.suckless.org/slock"
 changelog="https://git.suckless.org/slock/log.html"
 distfiles="http://dl.suckless.org/tools/slock-${version}.tar.gz"
 checksum=99711e6b419b221ae9fc3e9c8f31e6b168db51154278996f3d02ce65cc198301
+conf_files="/etc/pam.d/slock"
 
 if [ "$XBPS_TARGET_LIBC" = "glibc" ]; then
 	makedepends+=" libxcrypt-devel"
@@ -21,10 +22,11 @@ do_build() {
 	sed -i 's/CPPFLAGS =/CPPFLAGS +=/g' config.mk
 	sed -i 's/CFLAGS =/CFLAGS +=/g' config.mk
 	sed -i 's/LDFLAGS =/LDFLAGS +=/g' config.mk
-	make CC=$CC INCS="-I." LIBS="-lX11 -lXext -lcrypt -lXrandr" ${makejobs}
+	make CC=$CC INCS="-I." LIBS="-lX11 -lXext -lcrypt -lXrandr -lpam" ${makejobs}
 }
 
 do_install() {
 	make PREFIX=/usr DESTDIR=$DESTDIR install
+	vinstall "${FILESDIR}/slock.pam" 644 etc/pam.d slock
 	vlicense LICENSE
 }
