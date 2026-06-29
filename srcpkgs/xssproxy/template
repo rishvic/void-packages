@@ -1,0 +1,19 @@
+# Template file for 'xssproxy'
+pkgname=xssproxy
+version=1.1.2
+revision=1
+build_style=gnu-makefile
+make_use_env=yes
+make_install_args="bindir=/usr/bin man1dir=/usr/share/man/man1"
+hostmakedepends="pkg-config"
+makedepends="libglib-devel libX11-devel libXScrnSaver-devel dbus-devel"
+short_desc="Forward freedesktop.org Idle Inhibition Service calls to Xss"
+maintainer="Rishvic Pushpakaran <rishvic@gmail.com>"
+license="MIT"
+homepage="https://github.com/vincentbernat/xssproxy"
+distfiles="https://github.com/vincentbernat/xssproxy/archive/refs/tags/v${version}.tar.gz"
+checksum=c592cc8f004d86672a46ad80715d5f349809ea269c6c1a436589cb76deb4f3ba
+
+post_install() {
+	vlicense LICENSE.txt
+}

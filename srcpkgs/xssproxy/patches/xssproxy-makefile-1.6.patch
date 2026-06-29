@@ -1,0 +1,15 @@
+diff -ur a/Makefile b/Makefile
+--- a/Makefile	2025-09-17 03:37:43.000000000 +0530
++++ b/Makefile	2026-06-29 23:31:57.017987558 +0530
+@@ -1,8 +1,8 @@
+-bindir = /usr/local/bin
+-man1dir = /usr/local/share/man/man1
++bindir ?= /usr/local/bin
++man1dir ?= /usr/local/share/man/man1
+ 
+ PKG_CONFIG ?= pkg-config
+-CFLAGS = -Wall -g -O3
++CFLAGS += -Wall
+ CFLAGS_ALL = `$(PKG_CONFIG) --cflags --libs glib-2.0 x11 xscrnsaver dbus-1` -std=c11 $(CFLAGS)
+ 
+ .PHONY: all
