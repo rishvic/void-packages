@@ -1,0 +1,24 @@
+# Template file for 'brightnessctl-git'
+pkgname=brightnessctl-git
+version=20241215.1
+_gitrev=e70bc55cf053caa285695ac77507e009b5508ee3
+revision=1
+build_style=configure
+configure_args="--prefix=/usr --udev-dir=/usr/lib/udev/rules.d \
+ $(vopt_if elogind '--enable-logind --dbus-provider=elogind') \
+ $(vopt_if basu '--enable-logind --dbus-provider=basu')"
+hostmakedepends="pkg-config"
+makedepends="$(vopt_if elogind elogind-devel) $(vopt_if basu basu-devel)"
+conflicts="brightnessctl"
+short_desc="Read and control device brightness"
+maintainer="Rishvic Pushpakaran <rishvic@gmail.com>"
+license="MIT"
+homepage="https://github.com/Hummer12007/brightnessctl"
+distfiles="https://github.com/Hummer12007/brightnessctl/archive/${_gitrev}.zip"
+checksum=585aa568a0f748cb8eafe7449c9de9f7b2f73c0264a7f4044bc2df5305ed3535
+build_options="elogind basu"
+vopt_conflict elogind basu
+
+post_install() {
+	vlicense LICENSE
+}
