@@ -1,0 +1,10 @@
+# Template file for 'ghcup-deps'
+pkgname=ghcup-deps
+version=1.0
+revision=1
+metapackage=yes
+depends="binutils curl gcc gmp-devel glibc-devel libffi-devel make ncurses-devel ncurses-libtinfo-libs perl pkg-config tar xz"
+short_desc="System dependencies required by GHCup on Void Linux"
+maintainer="Rishvic Pushpakaran <rishvic@gmail.com>"
+license="Public Domain"
+homepage="https://www.haskell.org/ghcup/install/reqs/"
