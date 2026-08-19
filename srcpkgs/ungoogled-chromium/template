@@ -1,14 +1,14 @@
 # Template file for 'ungoogled-chromium'
 pkgname=ungoogled-chromium
 # See https://chromiumdash.appspot.com/releases?platform=Linux for the latest version
-version=151.0.7922.71
+version=151.0.7922.108
 revision=1
 _rollup=4.22.4
 archs="i686* x86_64* aarch64* armv7l*"
 _llvmver=22
 # ungoogled chromium variables
 _uc_usr=ungoogled-software
-_uc_ver=151.0.7922.71-1
+_uc_ver=151.0.7922.108-1
 hostmakedepends="
  $(vopt_if clang "clang${_llvmver} lld${_llvmver} llvm${_llvmver} compiler-rt${_llvmver}")
  bison git gperf hwids ninja nodejs perl pkg-config python3
@@ -41,9 +41,9 @@ homepage="https://www.chromium.org/"
 distfiles="https://github.com/chromium-linux-tarballs/chromium-tarballs/releases/download/${version}/chromium-${version}-linux.tar.xz
  https://registry.npmjs.org/@rollup/wasm-node/-/wasm-node-${_rollup}.tgz
  https://github.com/$_uc_usr/ungoogled-chromium/archive/$_uc_ver.tar.gz>${pkgname}-${_uc_ver}.tar.gz"
-checksum="b0bafa1501f47ad27c96c9b5451bb000058ab40ee0dc945a066d3bd614e84a2f
+checksum="69f7abb0b3907245b3239c9e3880789b61144843cbd7669fee18c2f79909572d
  ee49bf67bd9bee869405af78162d028e2af0fcfca80497404f56b1b99f272717
- 3b68b04a950b8c085d8ccf27ae654d667666eb9a714e4e3fb46cad9f74866a1f"
+ 32819f0a063b04c84f6e2f9310fb5d33c713db1c76d6739ba6e416b34f815d7c"
 
 skip_extraction="wasm-node-${_rollup}.tgz
  ${pkgname}-${_uc_ver}.tar.gz"
