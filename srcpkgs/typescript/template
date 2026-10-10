@@ -1,0 +1,29 @@
+# Template file for 'typescript'
+pkgname=typescript
+version=7.0.2
+revision=1
+conflicts="TSC"
+build_wrksrc=tsc
+build_style=go
+go_import_path="github.com/microsoft/typescript-go"
+go_package="${go_import_path}/cmd/tsgo"
+go_build_tags=noembed
+short_desc="TypeScript native compiler and language server"
+maintainer="Rishvic Pushpakaran <rishvic@gmail.com>"
+license="Apache-2.0"
+homepage="https://www.typescriptlang.org/"
+changelog="https://github.com/microsoft/TypeScript/releases"
+distfiles="https://github.com/microsoft/TypeScript/archive/refs/tags/v${version}.tar.gz"
+checksum=8472f284b1465f5c4826a64c88853eccba667446f31a435ed1d0b28d373dbc0b
+export CGO_ENABLED=0
+export GOFLAGS="-buildmode=pie -trimpath"
+
+post_install() {
+	# noembed resolves libraries beside the real executable, following symlinks.
+	vmkdir usr/lib/typescript
+	mv "${DESTDIR}/usr/bin/tsgo" "${DESTDIR}/usr/lib/typescript/tsc"
+	vcopy "internal/bundled/libs/*" usr/lib/typescript
+	ln -s ../lib/typescript/tsc "${DESTDIR}/usr/bin/tsc"
+	vlicense LICENSE
+	vlicense NOTICE.txt
+}
