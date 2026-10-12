@@ -1,19 +1,19 @@
 # Template file for 'ungoogled-chromium'
 pkgname=ungoogled-chromium
 # See https://chromiumdash.appspot.com/releases?platform=Linux for the latest version
-version=151.0.7922.108
+version=154.0.8037.57
 revision=1
 _rollup=4.22.4
 archs="i686* x86_64* aarch64* armv7l*"
 _llvmver=22
 # ungoogled chromium variables
 _uc_usr=ungoogled-software
-_uc_ver=151.0.7922.108-1
+_uc_ver="${version}-1"
 hostmakedepends="
  $(vopt_if clang "clang${_llvmver} lld${_llvmver} llvm${_llvmver} compiler-rt${_llvmver}")
  bison git gperf hwids ninja nodejs perl pkg-config python3
  libepoxy-devel libglib-devel rust rust-bindgen esbuild
- go gn $(vopt_if qt6 qt6-base)"
+ go gn typescript $(vopt_if qt6 qt6-base)"
 makedepends="
  alsa-lib-devel libdav1d-devel brotli-devel cups-devel elfutils-devel
  fontconfig-devel freetype-devel gtk+3-devel libXScrnSaver-devel
@@ -41,9 +41,9 @@ homepage="https://www.chromium.org/"
 distfiles="https://github.com/chromium-linux-tarballs/chromium-tarballs/releases/download/${version}/chromium-${version}-linux.tar.xz
  https://registry.npmjs.org/@rollup/wasm-node/-/wasm-node-${_rollup}.tgz
  https://github.com/$_uc_usr/ungoogled-chromium/archive/$_uc_ver.tar.gz>${pkgname}-${_uc_ver}.tar.gz"
-checksum="69f7abb0b3907245b3239c9e3880789b61144843cbd7669fee18c2f79909572d
+checksum="2b2c55e73cbf9ce4103f8f87829d0b9ce61916152e3deb1596d451d5e291deae
  ee49bf67bd9bee869405af78162d028e2af0fcfca80497404f56b1b99f272717
- 32819f0a063b04c84f6e2f9310fb5d33c713db1c76d6739ba6e416b34f815d7c"
+ 16de3f0746e58856edbf7696f60b95ab885efa3b83cdd32a032b5b5f4bc9f94b"
 
 skip_extraction="wasm-node-${_rollup}.tgz
  ${pkgname}-${_uc_ver}.tar.gz"
@@ -128,9 +128,10 @@ post_patch() {
 
 	mkdir -p third_party/node/linux/node-linux-x64/bin
 	rm -f third_party/node/linux/node-linux-x64/bin/node
-	ln -s /usr/bin/node third_party/node/linux/node-linux-x64/bin/
+	ln -s /usr/bin/node third_party/node/linux/node-linux-x64/bin/node
 
 	mkdir -p third_party/dawn/tools/golang/linux-amd64/bin
+	rm -f third_party/dawn/tools/golang/linux-amd64/bin/go
 	ln -s /usr/bin/go third_party/dawn/tools/golang/linux-amd64/bin/go
 
 	rm -rv third_party/devtools-frontend/src/node_modules/rollup
@@ -145,6 +146,11 @@ post_patch() {
 	rm -vf third_party/gperf/cipd/bin/gperf
 	mkdir -p third_party/gperf/cipd/bin
 	ln -sv /usr/bin/gperf third_party/gperf/cipd/bin/gperf
+
+	rm -vf third_party/typescript/linux-amd64/src/lib
+	mkdir -p third_party/typescript/linux-amd64/src/lib
+	cp -f /usr/lib/typescript/* third_party/typescript/linux-amd64/src/lib/
+	patch -p1 -d third_party/typescript/linux-amd64/src -i "${FILESDIR}/chromium-patches/typescript_native_preview.patch"
 }
 
 _setup_clang() {
@@ -218,13 +224,13 @@ do_configure() {
 	# snappy
 	# ffmpeg: system ffmpeg is too old and makes the ffmpeg update not require
 	#  rebuilding chromium
+	# libpng
 	system=(
 		flac
 		fontconfig
 		freetype
 		libdrm
 		libjpeg
-		libpng
 		libwebp
 		libxml
 		libxslt
@@ -421,14 +427,20 @@ do_install() {
 
 	vsed -i \
 		-e 's/@@MENUNAME/Chromium/g' \
-		-e 's/@@PACKAGE/chromium/g' \
-		-e 's/@@usr_bin_symlink_name/chromium/g' \
+		-e 's/@@desktop_exec/chromium/g' \
+		-e 's/@@desktop_icon/chromium/g' \
 		-e 's/@@uri_scheme/x-scheme-handler\/chromium;/g' \
 		-e 's/@@startup_wm_class/chromium/g' \
 		-e '/@@extra_desktop_entries/d' \
-		${DESTDIR}/usr/share/man/man1/chromium.1 \
-		${DESTDIR}/usr/share/applications/chromium.desktop
+		"${DESTDIR}/usr/share/applications/chromium.desktop"
 	if grep '@@' "${DESTDIR}/usr/share/applications/chromium.desktop"; then
+		msg_error "missing substitution"
+	fi
+	vsed -i \
+		-e 's/@@MENUNAME/Chromium/g' \
+		-e 's/@@PACKAGE/chromium/g' \
+		"${DESTDIR}/usr/share/man/man1/chromium.1"
+	if grep '@@' "${DESTDIR}/usr/share/man/man1/chromium.1"; then
 		msg_error "missing substitution"
 	fi
 }
